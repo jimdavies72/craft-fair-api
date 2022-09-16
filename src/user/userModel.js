@@ -17,7 +17,7 @@ const User = connection.define(
       allowNull: false,
     }
   },
-  { indexes: [{unique: true, fields: ["username"]}]}
+  { indexes: [{unique: true, fields: ["username"]}, {unique: false, fields: ["userType"]}]}
 )
 
 module.exports = User ;
