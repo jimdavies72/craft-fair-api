@@ -46,7 +46,7 @@ exports.validateEmail = (req, res, next) => {
     if (validator.validate(req.body.username)) {
       next();
     } else {
-      throw new Error("email address is in incorrect format");
+      throw new Error("Email address is in incorrect format");
     }
   } catch (error) {
     res.status(500).send({ error: error.message });
