@@ -4,7 +4,7 @@ const User = require("./userModel");
 exports.addUser = async (req, res) => {
   try {
     const newUser = await User.create(req.body);
-     const token = await jwt.sign({ _id: newUser.id }, process.env.SECRET);
+    const token = await jwt.sign({ _id: newUser.id }, process.env.SECRET);
     res.status(201).send({ msg: "New user added", data: newUser.username, token });
   } catch (error) {
     res.status(400).send({ msg: "Error: ", data: error.name });
