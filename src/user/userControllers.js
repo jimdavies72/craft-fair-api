@@ -55,6 +55,7 @@ exports.deleteUser = async (req, res) => {
     res.status(404).send({ error: error.message });
   }
 };
+
 exports.loginUser = async (req, res) => {
   try {
     res.status(200).send({ user: req.user });
@@ -64,7 +65,6 @@ exports.loginUser = async (req, res) => {
 };
 
 exports.updateUser = async (req, res) => {
-
   try {
     const result = await User.update(req.body, {
       where: { username: req.user.username },
