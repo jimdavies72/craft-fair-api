@@ -31,7 +31,7 @@ exports.findUser = async (req, res) => {
       res.status(404).send({ msg: `User: ${req.body.filterVal} not found` });
     }
   } catch (error) {
-    res.status(500).send({ error: error });
+    res.status(500).send({ error: error.message });
   }
 };
 
