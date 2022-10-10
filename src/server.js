@@ -6,6 +6,7 @@ const Test = require('./test/testModel')
 const testRouter = require('./test/testRoutes')
 const User = require("./user/userModel");
 const userRouter = require("./user/userRoutes");
+const Vendor = require("./vendor/vendorModel")
 const app = express();
 const port = process.env.PORT || 5001;
 
@@ -31,6 +32,7 @@ app.use((req, res) => {
 app.listen(port, () => {
   connection.authenticate();
   User.sync({ alter: true });
+  Vendor.sync({ alter: true })
   Test.sync({ alter: true })
   console.log(`App is listening on port ${port}`)
 });
