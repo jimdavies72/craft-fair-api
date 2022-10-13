@@ -1,6 +1,5 @@
 const { DataTypes } = require("sequelize");
 const connection = require("../db/connection");
-const User = require("../user/userModel");
 
 const Vendor = connection.define(
   "Vendor",
@@ -16,7 +15,5 @@ const Vendor = connection.define(
     indexes: [{ unique: true, fields: ["vendorName"] }],
   }
 );
-
-Vendor.belongsTo(User);
 
 module.exports = Vendor;
