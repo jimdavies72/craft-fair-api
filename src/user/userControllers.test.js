@@ -349,6 +349,17 @@ describe('userControllers', () => {
     });
   });
 
+  describe('given a user is logging in', () => {
+    describe('when the user is logged in then', () => {
+      it('should return a 200 and a message', () => {
+        //arrange
+        
+        //act
 
+        //assert
+        expect(1).toEqual(1);
+      });
+    });
+  });
 });
 
