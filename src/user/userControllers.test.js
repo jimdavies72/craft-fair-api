@@ -1,17 +1,29 @@
 const { requestFilter } = require("../utils");
+const { NextFunction } = require("express");
 const supertest = require('supertest');
 const { createServer } = require('../utils/createServer');
 const { verify, sign } = require("jsonwebtoken");
-const { validateEmail, hashPassword } = require("../middleware");
+const { validateEmail, hashPassword, checkToken, decryptPassword } = require("../middleware");
 
 app = createServer();
 
 jest.mock('../middleware', () => {
+  // do it this way if you wish to mock only certain functions from the module...
   const actualModule = jest.requireActual('../middleware');
   return {
     ...actualModule,
     validateEmail: jest.fn((req, res, next) => next()),
     hashPassword: jest.fn((req, res, next) => next()),
+    checkToken: jest.fn((req, res, next) => next()),
+    decryptPassword: jest.fn((req, res, next) => {
+      req.user = {
+        id: 2,
+        username: "host1@email.com",
+        pw: "$2a$10$bVcu3XrYXeqX051FRFHEguqd02XpEQpk832WDJSkUq0JnIfYcfpYS",
+        userType: "host",
+      };
+      next();
+    }),
   };
 });
 
@@ -81,12 +93,15 @@ jest.mock("./userModel", () => {
           return users;
         case "findOne":
           if (queryOptions[0].where.username === "host1@email.com") {
-            return UserMock.build({
-              id: 2,
-              username: "host1@email.com",
-              pw: "Password2",
-              userType: "host",
-            });
+            return UserMock.build(
+              {
+                id: 2,
+                username: "host1@email.com",
+                pw: "$2a$10$bVcu3XrYXeqX051FRFHEguqd02XpEQpk832WDJSkUq0JnIfYcfpYS",
+                userType: "host",
+              },
+              {isNewRecord: false},
+            );
           } else if (queryOptions[0].where.username === "xxx") {
             throw new Error("error message");
           } else {
@@ -107,6 +122,8 @@ jest.mock("./userModel", () => {
           } else {
             throw new Error("NotNull Violation: User.message cannot be null");
           }
+        case "destroy":
+          return UserMock.build({})
       };    
     });
   };
@@ -349,17 +366,133 @@ describe('userControllers', () => {
     });
   });
 
-  describe('given a user is logging in', () => {
+  describe('given a user is logging in manually', () => {
     describe('when the user is logged in then', () => {
-      it('should return a 200 and a message', () => {
+      it('should return a 200 and a message', async () => {
         //arrange
-        
+        const un = "host1@email.com";
+        const req = {
+          username: un,
+          pw: "Password2",
+        }
+      
         //act
+        await supertest(app)
+          .post("/user/login")
+          .send(req)
 
         //assert
-        expect(1).toEqual(1);
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.user.id).toBe(2);
+            expect(res.body.user.username).toBe(un);
+            expect(decryptPassword).toHaveBeenCalled();
+          });
       });
     });
+
+    describe('when a login error occurs then', () => {
+      it('should return a 500 and an error message', async () => {
+        //arrange
+        const un = "host1@email.com";
+        const req = {
+          username: un,
+          pw: "Password2",
+        }
+        const mockError = "cannot POST /user/login (500)";
+
+        decryptPassword.mockImplementation(() => { throw new Error(mockError) });
+      
+        //act
+        await supertest(app)
+          .post("/user/login")
+          .send(req)
+        
+        //assert
+          .expect(500)
+          .expect((res) => {
+            expect(res.error.message).toBe(mockError);
+            expect(decryptPassword).toHaveBeenCalled();
+          });
+      });    
+    });
+  });
+
+  describe('deleteUser - given a user wishes to delete their account', () => {
+    describe('when the current user is valid and deleted then', () => {
+      it('should return a 200 and a success message', async () => {
+        //arrange
+        const un = "host1@email.com";
+        const req = {
+          params: { username: un },
+          user: {
+            username: un,
+          },
+        };
+
+        //act
+        await supertest(app)
+          .delete("/user/")
+          .send(req)
+
+        //assert
+        expect(200);
+        expect((res) => {
+          expect(checkToken).toHaveBeenCalled();
+          expect(res.body.message).toBe(`${un} has been deleted`);
+        });
+      });
+    });
+
+    describe('when the user is not valid and not deleted then', () => {
+      it('should return a 401 and an unsuccessful message', async () => {
+        const un = "host1@email.com";
+        const req = {
+          params: { username: un },
+          user: {
+            username: "vendor1@email.com",
+          },
+        };
+
+        //act
+        await supertest(app)
+          .delete("/user/")
+          .send(req);
+
+        //assert
+        expect(401);
+        expect((res) => {
+          expect(checkToken).toHaveBeenCalled();
+          expect(res.body.message).toBe('You are not authorized to delete this user');
+        });
+      });
+    });
+
+    describe('when the user causes an error then', () => {
+      it('should return a 500 and an error message', async () => {
+        //arrange
+        const un = "host1@email.com";
+        const mockError = "cannot DELETE /user/ (500)";
+        const req = {
+          params: { userame: un },
+          user: {
+            username: un,
+          },
+        };
+
+        //act
+        await supertest(app)
+          .delete("/user/")
+          .send(req);
+
+        //assert
+        expect(500);
+        expect((res) => {
+          expect(checkToken).toHaveBeenCalled();
+          expect(res.error).toBe(mockError);
+        });
+      });
+    });    
   });
 });
 

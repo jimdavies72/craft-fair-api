@@ -74,9 +74,8 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     if (req.user.username == req.params.username) {
-      if (await User.destroy({ where: { username: req.params.username},})) {
+      await User.destroy({ where: { username: req.params.username},})
         res.status(200).send({ message: `${req.params.username} has been deleted` });
-      } 
     } else {
       res.status(401).send({message: 'You are not authorized to delete this user'})
     }

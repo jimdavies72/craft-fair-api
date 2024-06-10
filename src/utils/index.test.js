@@ -1,6 +1,21 @@
-const utils = require('../utils');
+const { addS, createHashedPw, requestFilter } = require('../utils');
+
+jest.mock("../utils", () => {
+  const actualModule = jest.requireActual("../utils");
+  return {
+    ...actualModule,
+    createHashedPw: jest.fn(() => {
+      return "$2a$10$8nqPg/X9dgMDmUeUZSRwpOfxzguUDGzTWjlkaEo0PqhNoJRJyhUEK";
+    }),
+  };
+});
 
 describe("utility functions", () => {
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe("addS() - given a string may need to be single or plural ", () => {
     describe("when the number of something is > 1 then", () => {
       it("should return 's'", () => {
@@ -9,7 +24,7 @@ describe("utility functions", () => {
         const numberOfSomething = 2;
 
         //act
-        const resultWord = `${testWord}${utils.addS(numberOfSomething)}` 
+        const resultWord = `${testWord}${addS(numberOfSomething)}` 
 
         //assert
         expect(resultWord).toBe(`${testWord}s`)
@@ -23,7 +38,7 @@ describe("utility functions", () => {
         const numberOfSomething = 0;
 
         //act
-        const resultWord = `${testWord}${utils.addS(numberOfSomething)}` 
+        const resultWord = `${testWord}${addS(numberOfSomething)}` 
 
         //assert
         expect(resultWord).toBe(`${testWord}s`)
@@ -37,7 +52,7 @@ describe("utility functions", () => {
         const numberOfSomething = -1;
 
         //act
-        const resultWord = `${testWord}${utils.addS(numberOfSomething)}` 
+        const resultWord = `${testWord}${addS(numberOfSomething)}` 
 
         //assert
         expect(resultWord).toBe(`${testWord}s`)
@@ -51,7 +66,7 @@ describe("utility functions", () => {
         const numberOfSomething = 1;
 
         //act
-        const resultWord = `${testWord}${utils.addS(numberOfSomething)}` 
+        const resultWord = `${testWord}${addS(numberOfSomething)}` 
 
         //assert 
         expect(resultWord).toBe(`${testWord}`)
@@ -65,7 +80,7 @@ describe("utility functions", () => {
         const string = "2";
 
         //act
-        const resultWord = `${testWord}${utils.addS(string)}`;
+        const resultWord = `${testWord}${addS(string)}`;
 
         //assert
         expect(resultWord).toBe(`${testWord}s`);
@@ -80,7 +95,7 @@ describe("utility functions", () => {
   
           //act
           const passString = () => {
-            utils.addSe(string);        
+            addS(string);        
           }
         } catch(error) {
           //assert
@@ -98,7 +113,7 @@ describe("utility functions", () => {
         const val = 1;
         
         //act
-        const result = utils.requestFilter(key, val);
+        const result = requestFilter(key, val);
         
         //assert
         expect(result).toEqual({filterKey: key, filterVal: val});
@@ -114,7 +129,7 @@ describe("utility functions", () => {
           
           //act
           const passString = () => {
-            utils.requestFilter(key, val);        
+            requestFilter(key, val);        
           }
           
         } catch(error) {
@@ -123,6 +138,24 @@ describe("utility functions", () => {
         }
       });
     }) 
+  });
+
+  describe("createHashedPw() - given a password then", () => {
+    describe("when the password is hashed then", () => {
+      it("should return a hashed password string", async () => {
+        //arrange
+        const pw = "password1";
+        const mockHash =
+          "$2a$10$8nqPg/X9dgMDmUeUZSRwpOfxzguUDGzTWjlkaEo0PqhNoJRJyhUEK"; 
+
+        //act
+        const result = await createHashedPw(pw)
+         
+        //assert
+        expect(result).toBe(mockHash);
+        expect(createHashedPw).toHaveBeenCalled();
+      });
+    });
   });
 
   // more functions go here

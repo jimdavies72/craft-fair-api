@@ -23,7 +23,7 @@ exports.decryptPassword = async (req, res, next) => {
     req.user= await User.findOne({where: {username: req.body.username}});
     if (req.user && await bcrypt.compare(req.body.pw, req.user.pw)){
       next()
-    } else {
+      } else {
       res.status(401).send({message: 'Incorrect credentials supplied'})
     }
   } catch (error) {

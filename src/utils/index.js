@@ -1,5 +1,8 @@
+const bcrypt = require("bcryptjs");
+require("dotenv").config();
+
 exports.addS = (val = 0) => {
-  if (isNaN(Number(val))){
+  if (isNaN(Number(val))) {
     throw new Error("AddS: val must be numeric");
   }
   let plural = "";
@@ -7,10 +10,10 @@ exports.addS = (val = 0) => {
     plural = "s";
   }
   return plural;
-}
+};
 
 exports.requestFilter = (key, val) => {
-  if (!key ) {
+  if (!key) {
     throw new Error("requestFilter: valid key and val are required");
   }
 
@@ -18,5 +21,13 @@ exports.requestFilter = (key, val) => {
     filterKey: key,
     filterVal: val,
   };
-  
 };
+
+exports.createHashedPw = async (pw) => {
+  const saltRounds = parseInt(process.env.SALT_ROUNDS);
+  hash = await bcrypt.hash(pw, saltRounds);
+  //console.log("hash: ", hash);
+  return hash;
+};
+
+//createHashedPw("Password2");
